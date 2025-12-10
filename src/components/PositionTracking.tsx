@@ -1,4 +1,5 @@
 import { TrendingUp, TrendingDown, Minus, AlertTriangle, ExternalLink } from 'lucide-react';
+import type { TrackedKeyword } from '../App';
 
 interface KeywordTracking {
   id: number;
@@ -12,7 +13,7 @@ interface KeywordTracking {
   cannibalizationUrl?: string;
 }
 
-const trackingData: KeywordTracking[] = [
+const defaultTrackingData: KeywordTracking[] = [
   {
     id: 1,
     keyword: 'universidad ciencias informáticas',
@@ -162,11 +163,14 @@ function PositionBadge({ position }: { position: number }) {
   );
 }
 
-export function PositionTracking() {
-  const totalKeywords = trackingData.length;
-  const topThree = trackingData.filter(k => k.currentPosition <= 3).length;
-  const improving = trackingData.filter(k => k.change > 0).length;
-  const cannibalization = trackingData.filter(k => k.hasCannibalization).length;
+export function PositionTracking({ additionalKeywords }: { additionalKeywords: TrackedKeyword[] }) {
+  // Combinar keywords por defecto con las agregadas desde research
+  const allTrackingData = [...defaultTrackingData, ...additionalKeywords];
+  
+  const totalKeywords = allTrackingData.length;
+  const topThree = allTrackingData.filter(k => k.currentPosition <= 3).length;
+  const improving = allTrackingData.filter(k => k.change > 0).length;
+  const cannibalization = allTrackingData.filter(k => k.hasCannibalization).length;
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -215,7 +219,7 @@ export function PositionTracking() {
                 Esto puede dividir tu autoridad y afectar tu posicionamiento.
               </p>
               <div className="space-y-2">
-                {trackingData
+                {allTrackingData
                   .filter(k => k.hasCannibalization)
                   .map(keyword => (
                     <div key={keyword.id} className="bg-white border border-red-200 rounded p-3">
@@ -268,7 +272,7 @@ export function PositionTracking() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {trackingData.map((keyword) => (
+              {allTrackingData.map((keyword) => (
                 <tr 
                   key={keyword.id} 
                   className={`hover:bg-gray-50 ${
@@ -328,7 +332,7 @@ export function PositionTracking() {
 
         <div className="p-6 border-t border-gray-200 bg-gray-50">
           <div className="flex items-center justify-between text-gray-600">
-            <span>Mostrando {trackingData.length} de {trackingData.length} keywords</span>
+            <span>Mostrando {allTrackingData.length} de {allTrackingData.length} keywords</span>
             <div className="flex gap-2">
               <span className="flex items-center gap-1">
                 <div className="w-3 h-3 bg-green-500 rounded-full"></div>

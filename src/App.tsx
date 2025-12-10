@@ -20,10 +20,23 @@ export type View =
   | 'architecture' 
   | 'tracking';
 
+export interface TrackedKeyword {
+  id: number;
+  keyword: string;
+  currentPosition: number;
+  previousPosition: number;
+  change: number;
+  volume: number;
+  url: string;
+  hasCannibalization: boolean;
+  cannibalizationUrl?: string;
+}
+
 function App() {
   const [currentView, setCurrentView] = useState<View>('login');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentProject, setCurrentProject] = useState<string>('Portal UCI');
+  const [trackedKeywords, setTrackedKeywords] = useState<TrackedKeyword[]>([]);
 
   const handleLogin = () => {
     setIsAuthenticated(true);
@@ -33,6 +46,31 @@ function App() {
   const handleLogout = () => {
     setIsAuthenticated(false);
     setCurrentView('login');
+  };
+
+  const handleAddToTracking = (keyword: string, volume: number) => {
+    // Verificar si ya existe
+    const exists = trackedKeywords.some(k => k.keyword.toLowerCase() === keyword.toLowerCase());
+    if (exists) {
+      return false;
+    }
+
+    const newKeyword: TrackedKeyword = {
+      id: Date.now(),
+      keyword: keyword,
+      currentPosition: Math.floor(Math.random() * 20) + 1, // Posición aleatoria para demo
+      previousPosition: Math.floor(Math.random() * 20) + 1,
+      change: 0,
+      volume: volume,
+      url: '/',
+      hasCannibalization: false
+    };
+
+    // Calcular cambio
+    newKeyword.change = newKeyword.previousPosition - newKeyword.currentPosition;
+
+    setTrackedKeywords(prev => [...prev, newKeyword]);
+    return true;
   };
 
   if (!isAuthenticated) {
@@ -53,12 +91,21 @@ function App() {
           {currentView === 'dashboard' && (
             <Dashboard onNavigate={setCurrentView} onSelectProject={setCurrentProject} />
           )}
-          {currentView === 'keywords' && <KeywordResearch />}
+          {currentView === 'keywords' && (
+            <KeywordResearch 
+              onAddToTracking={handleAddToTracking}
+              onNavigateToTracking={() => setCurrentView('tracking')}
+            />
+          )}
           {currentView === 'audit' && <TechnicalAudit />}
           {currentView === 'semantic' && <SemanticAnalysis />}
           {currentView === 'gsc' && <GSCIntegration />}
           {currentView === 'architecture' && <SiteArchitecture />}
-          {currentView === 'tracking' && <PositionTracking />}
+          {currentView === 'tracking' && (
+            <PositionTracking 
+              additionalKeywords={trackedKeywords}
+            />
+          )}
         </main>
       </div>
     </div>
