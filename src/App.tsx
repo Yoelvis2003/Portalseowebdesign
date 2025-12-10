@@ -98,7 +98,11 @@ function App() {
             />
           )}
           {currentView === 'audit' && <TechnicalAudit />}
-          {currentView === 'semantic' && <SemanticAnalysis />}
+          {currentView === 'semantic' && (
+            <SemanticAnalysis 
+              onAddToTracking={handleAddToTracking}
+            />
+          )}
           {currentView === 'gsc' && <GSCIntegration />}
           {currentView === 'architecture' && <SiteArchitecture />}
           {currentView === 'tracking' && (
