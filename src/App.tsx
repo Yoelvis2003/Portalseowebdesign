@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner@2.0.3';
 import { Toaster } from './components/ui/sonner';
 import { Login } from './components/Login';
@@ -39,6 +39,17 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentProject, setCurrentProject] = useState<string>('Portal UCI');
   const [trackedKeywords, setTrackedKeywords] = useState<TrackedKeyword[]>([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // Cambiado a false para que esté oculto por defecto
+  const [darkMode, setDarkMode] = useState(false);
+
+  // Aplicar dark mode al documento
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
 
   const handleLogin = () => {
     setIsAuthenticated(true);
@@ -114,14 +125,27 @@ function App() {
   return (
     <>
       <Toaster />
-      <div className="flex h-screen bg-gray-50">
-        <Sidebar currentView={currentView} onNavigate={setCurrentView} />
+      <div className="relative h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+        {/* Sidebar fijo */}
+        <Sidebar 
+          currentView={currentView} 
+          onNavigate={(view) => {
+            setCurrentView(view);
+            setSidebarOpen(false); // Cerrar sidebar al navegar
+          }} 
+          isOpen={sidebarOpen}
+        />
         
-        <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Contenido principal - ocupa toda la pantalla */}
+        <div className="h-full flex flex-col">
           <Header 
             currentProject={currentProject} 
             onLogout={handleLogout}
             onCreateProject={handleCreateProject}
+            onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+            sidebarOpen={sidebarOpen}
+            darkMode={darkMode}
+            onToggleDarkMode={() => setDarkMode(!darkMode)}
           />
           
           <main className="flex-1 overflow-y-auto p-6">
