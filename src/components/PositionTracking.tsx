@@ -1,5 +1,9 @@
-import { TrendingUp, TrendingDown, Minus, AlertTriangle, ExternalLink } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, AlertTriangle, ExternalLink, Plus, Download, FileSpreadsheet, FileText, Mail, Calendar } from 'lucide-react';
+import { useState } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import type { TrackedKeyword } from '../App';
+import { AddKeywordModal } from './AddKeywordModal';
+import { toast } from 'sonner@2.0.3';
 
 interface KeywordTracking {
   id: number;
@@ -11,6 +15,11 @@ interface KeywordTracking {
   url: string;
   hasCannibalization: boolean;
   cannibalizationUrl?: string;
+}
+
+interface PositionTrackingProps {
+  additionalKeywords: TrackedKeyword[];
+  onAddKeyword?: (keyword: string, volume: number, url: string) => void;
 }
 
 const defaultTrackingData: KeywordTracking[] = [
@@ -118,6 +127,82 @@ const defaultTrackingData: KeywordTracking[] = [
   }
 ];
 
+// Datos de evolución temporal (últimos 30 días)
+const generateEvolutionData = () => {
+  const dates = [];
+  for (let i = 29; i >= 0; i--) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    dates.push(date.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' }));
+  }
+  
+  return dates.map((date, index) => ({
+    date,
+    'universidad ciencias informáticas': Math.max(1, Math.floor(2 + Math.sin(index * 0.3) * 0.5)),
+    'cursos programación': Math.max(3, Math.floor(6 + Math.cos(index * 0.2) * 2)),
+    'mejor universidad informática cuba': Math.max(1, Math.floor(2 + Math.sin(index * 0.4) * 1)),
+    'admisión universidad': Math.max(3, Math.floor(5 + Math.sin(index * 0.25) * 1.5)),
+    'ciencia de datos': Math.max(4, Math.floor(7 + Math.cos(index * 0.3) * 2))
+  }));
+};
+
+// Datos de competidores
+const competitorData = [
+  {
+    id: 1,
+    domain: 'www.cujae.edu.cu',
+    position: 2,
+    keywords: 45,
+    traffic: 12500,
+    change: 5,
+    visibility: 78
+  },
+  {
+    id: 2,
+    domain: 'www.uh.cu',
+    position: 3,
+    keywords: 38,
+    traffic: 9800,
+    change: -2,
+    visibility: 65
+  },
+  {
+    id: 3,
+    domain: 'www.ispjae.cu',
+    position: 4,
+    keywords: 32,
+    traffic: 7200,
+    change: 3,
+    visibility: 58
+  },
+  {
+    id: 4,
+    domain: 'www.infomed.cu',
+    position: 5,
+    keywords: 28,
+    traffic: 6100,
+    change: 0,
+    visibility: 52
+  },
+  {
+    id: 5,
+    domain: 'www.ecured.cu',
+    position: 6,
+    keywords: 24,
+    traffic: 4800,
+    change: -1,
+    visibility: 45
+  }
+];
+
+// Datos para gráfico de distribución de posiciones
+const positionDistribution = [
+  { range: 'Top 3', count: 3, color: '#10b981' },
+  { range: 'Top 10', count: 5, color: '#3b82f6' },
+  { range: 'Top 20', count: 2, color: '#fbbf24' },
+  { range: '+20', count: 2, color: '#9ca3af' }
+];
+
 function PositionChange({ change }: { change: number }) {
   if (change > 0) {
     return (
@@ -163,7 +248,11 @@ function PositionBadge({ position }: { position: number }) {
   );
 }
 
-export function PositionTracking({ additionalKeywords }: { additionalKeywords: TrackedKeyword[] }) {
+export function PositionTracking({ additionalKeywords, onAddKeyword }: PositionTrackingProps) {
+  const [showAddKeywordModal, setShowAddKeywordModal] = useState(false);
+  const [selectedPeriod, setSelectedPeriod] = useState<'7d' | '30d' | '90d'>('30d');
+  const [showReportOptions, setShowReportOptions] = useState(false);
+
   // Combinar keywords por defecto con las agregadas desde research
   const allTrackingData = [...defaultTrackingData, ...additionalKeywords];
   
@@ -172,13 +261,88 @@ export function PositionTracking({ additionalKeywords }: { additionalKeywords: T
   const improving = allTrackingData.filter(k => k.change > 0).length;
   const cannibalization = allTrackingData.filter(k => k.hasCannibalization).length;
 
+  const evolutionData = generateEvolutionData();
+
+  const handleAddKeyword = (keyword: string, volume: number, url: string) => {
+    if (onAddKeyword) {
+      onAddKeyword(keyword, volume, url);
+      toast.success(`Palabra clave "${keyword}" agregada al tracking`);
+    }
+  };
+
+  const handleExportPDF = () => {
+    toast.success('Informe PDF generado exitosamente');
+    // Simulación de descarga
+    setTimeout(() => {
+      toast.info('Descargando: tracking-posiciones-2025-12-11.pdf');
+    }, 500);
+  };
+
+  const handleExportExcel = () => {
+    toast.success('Informe Excel generado exitosamente');
+    setTimeout(() => {
+      toast.info('Descargando: tracking-posiciones-2025-12-11.xlsx');
+    }, 500);
+  };
+
+  const handleSendEmail = () => {
+    toast.success('Informe enviado por correo electrónico');
+  };
+
   return (
     <div className="max-w-7xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-gray-900 mb-2">Tracking de Posiciones</h1>
-        <p className="text-gray-600">
-          Monitoreo diario del posicionamiento de tus palabras clave estratégicas
-        </p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-gray-900 mb-2">Tracking de Posiciones</h1>
+          <p className="text-gray-600">
+            Monitoreo diario del posicionamiento de tus palabras clave estratégicas
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <div className="relative">
+            <button 
+              onClick={() => setShowReportOptions(!showReportOptions)}
+              className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              Exportar Informe
+            </button>
+            
+            {showReportOptions && (
+              <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-10">
+                <button
+                  onClick={handleExportPDF}
+                  className="w-full flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <FileText className="w-4 h-4 text-red-600" />
+                  Exportar como PDF
+                </button>
+                <button
+                  onClick={handleExportExcel}
+                  className="w-full flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <FileSpreadsheet className="w-4 h-4 text-green-600" />
+                  Exportar como Excel
+                </button>
+                <div className="border-t border-gray-200 my-2"></div>
+                <button
+                  onClick={handleSendEmail}
+                  className="w-full flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <Mail className="w-4 h-4 text-blue-600" />
+                  Enviar por Email
+                </button>
+              </div>
+            )}
+          </div>
+          <button 
+            onClick={() => setShowAddKeywordModal(true)}
+            className="flex items-center gap-2 bg-blue-900 text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Agregar Palabra Clave
+          </button>
+        </div>
       </div>
 
       {/* Métricas resumen */}
@@ -203,6 +367,197 @@ export function PositionTracking({ additionalKeywords }: { additionalKeywords: T
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-5 h-5 text-red-600" />
             <span className="text-red-600">{cannibalization}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Evolución Temporal de Palabras Clave */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-8">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-gray-900 mb-1">Evolución de Posiciones</h2>
+              <p className="text-gray-600">
+                Seguimiento histórico de las principales palabras clave
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setSelectedPeriod('7d')}
+                className={`px-3 py-1 rounded ${
+                  selectedPeriod === '7d' 
+                    ? 'bg-blue-900 text-white' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                } transition-colors`}
+              >
+                7 días
+              </button>
+              <button
+                onClick={() => setSelectedPeriod('30d')}
+                className={`px-3 py-1 rounded ${
+                  selectedPeriod === '30d' 
+                    ? 'bg-blue-900 text-white' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                } transition-colors`}
+              >
+                30 días
+              </button>
+              <button
+                onClick={() => setSelectedPeriod('90d')}
+                className={`px-3 py-1 rounded ${
+                  selectedPeriod === '90d' 
+                    ? 'bg-blue-900 text-white' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                } transition-colors`}
+              >
+                90 días
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div className="p-6">
+          <ResponsiveContainer width="100%" height={400}>
+            <LineChart data={evolutionData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis 
+                dataKey="date" 
+                stroke="#6b7280"
+                style={{ fontSize: '12px' }}
+              />
+              <YAxis 
+                reversed
+                domain={[1, 20]}
+                stroke="#6b7280"
+                style={{ fontSize: '12px' }}
+                label={{ value: 'Posición', angle: -90, position: 'insideLeft' }}
+              />
+              <Tooltip 
+                contentStyle={{
+                  backgroundColor: 'white',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px'
+                }}
+              />
+              <Legend />
+              <Line 
+                type="monotone" 
+                dataKey="universidad ciencias informáticas" 
+                stroke="#10b981" 
+                strokeWidth={2}
+                dot={{ fill: '#10b981', r: 3 }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="cursos programación" 
+                stroke="#3b82f6" 
+                strokeWidth={2}
+                dot={{ fill: '#3b82f6', r: 3 }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="mejor universidad informática cuba" 
+                stroke="#f59e0b" 
+                strokeWidth={2}
+                dot={{ fill: '#f59e0b', r: 3 }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="admisión universidad" 
+                stroke="#8b5cf6" 
+                strokeWidth={2}
+                dot={{ fill: '#8b5cf6', r: 3 }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="ciencia de datos" 
+                stroke="#ec4899" 
+                strokeWidth={2}
+                dot={{ fill: '#ec4899', r: 3 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Distribución de Posiciones */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-gray-900 mb-1">Distribución de Posiciones</h2>
+            <p className="text-gray-600">
+              Clasificación de keywords por rangos de posición
+            </p>
+          </div>
+          
+          <div className="p-6">
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={positionDistribution}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis 
+                  dataKey="range" 
+                  stroke="#6b7280"
+                  style={{ fontSize: '12px' }}
+                />
+                <YAxis 
+                  stroke="#6b7280"
+                  style={{ fontSize: '12px' }}
+                />
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: 'white',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px'
+                  }}
+                />
+                <Bar dataKey="count" fill="#3b82f6" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Análisis de Competencia */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-gray-900 mb-1">Análisis de Competencia</h2>
+            <p className="text-gray-600">
+              Principales competidores por las mismas keywords
+            </p>
+          </div>
+          
+          <div className="p-6">
+            <div className="space-y-4">
+              {competitorData.slice(0, 5).map((competitor, index) => (
+                <div 
+                  key={competitor.id}
+                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`
+                      w-8 h-8 rounded-full flex items-center justify-center text-white
+                      ${index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-gray-400' : 'bg-orange-600'}
+                    `}>
+                      {index + 1}
+                    </div>
+                    <div>
+                      <div className="text-gray-900 flex items-center gap-2">
+                        {competitor.domain}
+                        <ExternalLink className="w-3 h-3 text-gray-400" />
+                      </div>
+                      <div className="text-gray-600">
+                        {competitor.keywords} keywords comunes
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-gray-900">
+                      {competitor.traffic.toLocaleString()} visitas/mes
+                    </div>
+                    <PositionChange change={competitor.change} />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -242,8 +597,9 @@ export function PositionTracking({ additionalKeywords }: { additionalKeywords: T
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-gray-900 mb-1">Seguimiento Diario de Posiciones</h2>
-          <p className="text-gray-600">
-            Última actualización: 10 de Diciembre, 2025 - 08:00 AM
+          <p className="text-gray-600 flex items-center gap-2">
+            <Calendar className="w-4 h-4" />
+            Última actualización: 11 de Diciembre, 2025 - 08:00 AM
           </p>
         </div>
 
@@ -354,6 +710,13 @@ export function PositionTracking({ additionalKeywords }: { additionalKeywords: T
           </div>
         </div>
       </div>
+
+      {/* Modal para agregar palabra clave */}
+      <AddKeywordModal 
+        isOpen={showAddKeywordModal}
+        onClose={() => setShowAddKeywordModal(false)}
+        onAdd={handleAddKeyword}
+      />
     </div>
   );
 }

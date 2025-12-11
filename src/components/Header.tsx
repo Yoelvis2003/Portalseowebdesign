@@ -1,19 +1,28 @@
-import { ChevronDown, LogOut, Bell, User } from 'lucide-react';
+import { ChevronDown, LogOut, Bell, User, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { EditProfile } from './EditProfile';
+import { NewProjectModal } from './NewProjectModal';
 
 interface HeaderProps {
   currentProject: string;
   onLogout: () => void;
+  onCreateProject?: (name: string, domain: string, keywords: string) => void;
 }
 
-export function Header({ currentProject, onLogout }: HeaderProps) {
+export function Header({ currentProject, onLogout, onCreateProject }: HeaderProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showNewProjectModal, setShowNewProjectModal] = useState(false);
 
   const handleSaveProfile = (data: any) => {
     console.log('Perfil actualizado:', data);
     // Aquí se manejaría la actualización del perfil
+  };
+
+  const handleCreateProject = (name: string, domain: string, keywords: string) => {
+    if (onCreateProject) {
+      onCreateProject(name, domain, keywords);
+    }
   };
 
   return (
@@ -31,6 +40,15 @@ export function Header({ currentProject, onLogout }: HeaderProps) {
 
           {/* Acciones del usuario */}
           <div className="flex items-center gap-4">
+            {/* Botón Nuevo Proyecto */}
+            <button 
+              onClick={() => setShowNewProjectModal(true)}
+              className="flex items-center gap-2 bg-blue-900 text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Nuevo Proyecto
+            </button>
+
             {/* Notificaciones */}
             <button className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors">
               <Bell className="w-5 h-5 text-gray-600" />
@@ -80,6 +98,13 @@ export function Header({ currentProject, onLogout }: HeaderProps) {
         isOpen={showEditProfile} 
         onClose={() => setShowEditProfile(false)}
         onSave={handleSaveProfile}
+      />
+
+      {/* Modal de nuevo proyecto */}
+      <NewProjectModal 
+        isOpen={showNewProjectModal} 
+        onClose={() => setShowNewProjectModal(false)}
+        onCreate={handleCreateProject}
       />
     </>
   );

@@ -1,5 +1,5 @@
 import { 
-  LayoutDashboard, 
+  Users, 
   Search, 
   FileCheck, 
   BrainCircuit, 
@@ -16,7 +16,7 @@ interface SidebarProps {
 }
 
 const menuItems = [
-  { id: 'dashboard' as View, label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'competitor' as View, label: 'Análisis Competencia', icon: Users },
   { id: 'keywords' as View, label: 'Palabras Clave', icon: Search },
   { id: 'audit' as View, label: 'Auditoría Técnica', icon: FileCheck },
   { id: 'semantic' as View, label: 'Análisis Semántico', icon: BrainCircuit },
