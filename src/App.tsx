@@ -134,6 +134,7 @@ function App() {
             setSidebarOpen(false); // Cerrar sidebar al navegar
           }} 
           isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
         />
         
         {/* Contenido principal - ocupa toda la pantalla */}
